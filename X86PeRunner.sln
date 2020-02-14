@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.1000
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "X86PeRecompiler", "X86PeRecompiler\X86PeRecompiler.vcxproj", "{BC6AE643-5856-4AB1-B9AC-2D425C07FC21}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "X86PeRunner", "X86PeRunner\X86PeRunner.vcxproj", "{BC6AE643-5856-4AB1-B9AC-2D425C07FC21}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PeLoader", "PeLoader\PeLoader.vcxproj", "{5F0D0E83-94AB-46F4-8463-B451EE2E35C1}"
 EndProject
