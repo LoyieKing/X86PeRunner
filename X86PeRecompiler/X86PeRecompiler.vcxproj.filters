@@ -66,15 +66,9 @@
     <ClInclude Include="capstone\include\platform.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="pe\pe.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="pe\pe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
