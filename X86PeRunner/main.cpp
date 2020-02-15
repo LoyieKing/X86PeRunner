@@ -7,5 +7,6 @@ int main()
 	int minor = 0;
 	cs_version(&major, &minor);
 	printf("Hello World!");
+
 	return 0;
 }

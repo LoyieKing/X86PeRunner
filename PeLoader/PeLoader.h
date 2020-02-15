@@ -32,15 +32,18 @@ extern "C" {
 		DWORD Size;				// Module size
 	} *PE_HANDLE;
 
+	typedef FARPROC(*IMPORT_CALLBACK)(PE_HANDLE Dll, PE_HANDLE NeededDll, LPCSTR ImportName, BOOL ByName);
+
+
 	PE_EXPORT DWORD PeLdrCalcModuleRamSize(PE_HANDLE);
 	PE_EXPORT BOOL PeLdrFixupModule(PE_HANDLE Pe);
-	PE_EXPORT BOOL PeLdrProcessModuleImports(PE_HANDLE Pe);
+	PE_EXPORT BOOL PeLdrProcessModuleImports(PE_HANDLE Pe, IMPORT_CALLBACK ImportCallback);
 	//PE_EXPORT int PeLdrStartProgram(LPWSTR ExePath);
 
 	typedef struct PeFile *PE_HANDLE;
 
-	PE_EXPORT PE_HANDLE PeLdrLoadModule(LPCWSTR FileName);
-	PE_EXPORT PE_HANDLE PeLdrLoadModuleA(LPCSTR FileName);
+	PE_EXPORT PE_HANDLE PeLdrLoadModule(LPCWSTR FileName, IMPORT_CALLBACK ImportCallback);
+	PE_EXPORT PE_HANDLE PeLdrLoadModuleA(LPCSTR FileName, IMPORT_CALLBACK ImportCallback);
 	PE_EXPORT PE_HANDLE PeLdrFindModule(LPCWSTR FileName);
 	PE_EXPORT PE_HANDLE PeLdrFindModuleA(LPCSTR FileName);
 	PE_EXPORT PE_HANDLE PeLdrFindModuleByBase(DWORD Base);
@@ -51,8 +54,8 @@ extern "C" {
 	PE_EXPORT DWORD PeLdrGetModuleFileNameA(PE_HANDLE Pe, LPSTR FileName, DWORD Size);
 	PE_EXPORT DWORD PeLdrGetModuleFileName(PE_HANDLE Pe, LPWSTR FileName, DWORD Size);
 	PE_EXPORT DWORD PeLdrGetFixedLoadAddress(PE_HANDLE Pe);
-	PE_EXPORT FARPROC PeLdrGetProcAddressA(PE_HANDLE Dll, LPCSTR Name);
-	PE_EXPORT FARPROC PeLdrGetProcAddress(PE_HANDLE Dll, LPCWSTR Name);
+	PE_EXPORT FARPROC PeLdrGetProcAddressA(PE_HANDLE Dll, LPCSTR Name, IMPORT_CALLBACK ImportCallback);
+	PE_EXPORT FARPROC PeLdrGetProcAddress(PE_HANDLE Dll, LPCWSTR Name, IMPORT_CALLBACK ImportCallback);
 	PE_EXPORT LPSTR PeLdrGetSystemDirectoryA();
 	PE_EXPORT LPWSTR PeLdrGetSystemDirectoryW();
 	PE_EXPORT int PeLdrIsValidX86(LPCWSTR ExePath);	// return 0 = not valid, 1 = GUI, -1 = console

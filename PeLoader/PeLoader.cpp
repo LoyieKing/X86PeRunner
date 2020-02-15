@@ -464,7 +464,7 @@ PE_EXPORT DWORD PeLdrGetFixedLoadAddress(PE_HANDLE Pe)
 }
 
 // Load file data into memory, if DesiredAddress==0 - allocate memory, return address of loaded module
-static LPVOID PeLdrInternalLoadModule(PE_HANDLE Pe, LPVOID DesiredAddress)
+static LPVOID PeLdrInternalLoadModule(PE_HANDLE Pe, LPVOID DesiredAddress, IMPORT_CALLBACK ImportCallback)
 {
 	if (Pe->IsNative)
 		return 0;
@@ -556,7 +556,7 @@ static LPVOID PeLdrInternalLoadModule(PE_HANDLE Pe, LPVOID DesiredAddress)
 	if (!PeLdrFixupModule(Pe))
 		goto Error;
 
-	if (!PeLdrProcessModuleImports(Pe))
+	if (!PeLdrProcessModuleImports(Pe, ImportCallback))
 		goto Error;
 
 	//PeLdrNotifyNewThread(Pe, DLL_PROCESS_ATTACH);
@@ -626,7 +626,7 @@ PE_EXPORT BOOL PeLdrFixupModule(PE_HANDLE Pe)
 }
 
 // Process imports, load modules if needed
-PE_EXPORT BOOL PeLdrProcessModuleImports(PE_HANDLE Pe)
+PE_EXPORT BOOL PeLdrProcessModuleImports(PE_HANDLE Pe, IMPORT_CALLBACK ImportCallback)
 {
 	if (Pe->IsNative)
 		return 0;
@@ -653,7 +653,7 @@ PE_EXPORT BOOL PeLdrProcessModuleImports(PE_HANDLE Pe)
 
 		char* DLLName = (char*)((DWORD)Pe->Base + (DWORD)Imp[i].Name);
 
-		PE_HANDLE Dll = PeLdrLoadModuleA(DLLName);
+		PE_HANDLE Dll = PeLdrLoadModuleA(DLLName, ImportCallback);
 		if (Dll == 0)
 		{
 			LogErr("Import dll %s not found\n", DLLName);
@@ -674,11 +674,13 @@ PE_EXPORT BOOL PeLdrProcessModuleImports(PE_HANDLE Pe)
 			FARPROC Func = 0;
 			if (Nam != 0)
 			{
-				Func = PeLdrGetProcAddressA(Dll, (LPCSTR)Nam->Name);
+				//Func = PeLdrGetProcAddressA(Dll, (LPCSTR)Nam->Name);
+				Func = ImportCallback(Pe, Dll, (LPCSTR)Nam->Name, true);
 			}
 			else
 			{
-				Func = PeLdrGetProcAddressA(Dll, (LPCSTR)*Ord);
+				//Func = PeLdrGetProcAddressA(Dll, (LPCSTR)*Ord);
+				Func = ImportCallback(Pe, Dll, (LPCSTR)*Ord, false);
 			}
 
 			if (Func == 0)
@@ -791,7 +793,7 @@ PE_EXPORT PE_HANDLE PeLdrFindModule(LPCWSTR FileName)
 	return 0;
 }
 
-PE_EXPORT PE_HANDLE PeLdrLoadModule(LPCWSTR FileName)
+PE_EXPORT PE_HANDLE PeLdrLoadModule(LPCWSTR FileName, IMPORT_CALLBACK ImportCallback)
 {
 	CLock L(&CSPeLdr); L.Lock();
 
@@ -805,18 +807,18 @@ PE_EXPORT PE_HANDLE PeLdrLoadModule(LPCWSTR FileName)
 	if (PE->IsNative)
 		return PE;
 	DWORD DesiredBase = PeLdrGetFixedLoadAddress(PE);
-	if (PeLdrInternalLoadModule(PE, (void*)DesiredBase))
+	if (PeLdrInternalLoadModule(PE, (void*)DesiredBase, ImportCallback))
 		return PE;
 	return NULL;
 }
 
 // The same as PeLdrLoadModule but ansi
-PE_EXPORT PE_HANDLE PeLdrLoadModuleA(LPCSTR FileNameA)
+PE_EXPORT PE_HANDLE PeLdrLoadModuleA(LPCSTR FileNameA, IMPORT_CALLBACK ImportCallback)
 {
 	wchar_t Buff[10240];
 	_snwprintf_s<10240>(Buff, 10240, L"%S", FileNameA);
 
-	return PeLdrLoadModule(Buff);
+	return PeLdrLoadModule(Buff, ImportCallback);
 }
 
 // The same as PeLdrFindModule but ansi
@@ -831,27 +833,27 @@ PE_EXPORT PE_HANDLE PeLdrFindModuleA(LPCSTR FileNameA)
 	return PeLdrFindModule(Buff);
 }
 
-PE_EXPORT FARPROC PeLdrGetProcAddress(PE_HANDLE Pe, LPCWSTR Name)
+PE_EXPORT FARPROC PeLdrGetProcAddress(PE_HANDLE Pe, LPCWSTR Name, IMPORT_CALLBACK ImportCallback)
 {
 	char Buff[10240];
 	_snprintf_s<10240>(Buff, 10240, "%S", Name);
 
-	return PeLdrGetProcAddressA(Pe, Buff);
+	return PeLdrGetProcAddressA(Pe, Buff, ImportCallback);
 }
 
 // == Windows API GetProcAddress, calls hook first
 // If 1st param==0 - scans all loaded modules for export with given name
-PE_EXPORT FARPROC PeLdrGetProcAddressInternal(PE_HANDLE Pe, LPCSTR Name)
+PE_EXPORT FARPROC PeLdrGetProcAddressInternal(PE_HANDLE Pe, LPCSTR Name, IMPORT_CALLBACK ImportCallback)
 {
 	CLock L(&CSPeLdr); L.Lock();
 
 	if (Pe == 0)
 	{
-		for (int i = 0; i<ModulesCount; i++)
+		for (int i = 0; i < ModulesCount; i++)
 		{
 			FARPROC Ret = 0;
 			if (Modules[i])
-				Ret = PeLdrGetProcAddressA(Modules[i], Name);
+				Ret = PeLdrGetProcAddressA(Modules[i], Name, ImportCallback);
 			if (Ret)
 				return Ret;
 		}
@@ -860,11 +862,11 @@ PE_EXPORT FARPROC PeLdrGetProcAddressInternal(PE_HANDLE Pe, LPCSTR Name)
 	if (!PeLdrIsValidHandle(Pe))
 		return 0;
 
-	if ((DWORD)Name<65536)
+	if ((DWORD)Name < 65536)
 	{
 		char Buff[16];
 		sprintf_s<16>(Buff, "Ord_%d", (DWORD)Name);
-		FARPROC Ret = PeLdrGetProcAddressA(Pe, Buff);
+		FARPROC Ret = PeLdrGetProcAddressA(Pe, Buff, ImportCallback);
 		if (Ret)
 			return Ret;
 	}
@@ -896,13 +898,13 @@ PE_EXPORT FARPROC PeLdrGetProcAddressInternal(PE_HANDLE Pe, LPCSTR Name)
 	char Buff[32];
 	if (Pe->IsStub)
 	{
-		if ((DWORD)Name<65536)	// Stub DLLs export only by names
+		if ((DWORD)Name < 65536)	// Stub DLLs export only by names
 		{
 			sprintf_s<32>(Buff, "_stub_Ord%d", (DWORD)Name);
 			Name = Buff;
 		}
 
-		for (DWORD i = 0; i<Exp->NumberOfNames && Ret == 0; i++)
+		for (DWORD i = 0; i < Exp->NumberOfNames && Ret == 0; i++)
 		{
 			char Buff[1024];
 			char *Func = (char*)(Names[i] + (DWORD)Pe->Base);
@@ -923,14 +925,14 @@ PE_EXPORT FARPROC PeLdrGetProcAddressInternal(PE_HANDLE Pe, LPCSTR Name)
 	}
 	else
 	{
-		if ((DWORD)Name<65536)
+		if ((DWORD)Name < 65536)
 		{
-			if ((DWORD)Name - Exp->Base<Exp->NumberOfFunctions)
+			if ((DWORD)Name - Exp->Base < Exp->NumberOfFunctions)
 				Ret = (FARPROC)(Functions[(DWORD)Name - Exp->Base] + (DWORD)Pe->Base);
 		}
 		else
 		{
-			for (DWORD i = 0; i<Exp->NumberOfNames && Ret == 0; i++)
+			for (DWORD i = 0; i < Exp->NumberOfNames && Ret == 0; i++)
 			{
 				char *Func = (char*)(Names[i] + (DWORD)Pe->Base);
 				if (Func && strcmp(Func, Name) == 0)
@@ -958,12 +960,12 @@ PE_EXPORT FARPROC PeLdrGetProcAddressInternal(PE_HANDLE Pe, LPCSTR Name)
 			char Buf1[1024];
 			strcpy_s<1024>(Buf1, Buff);
 			strcat_s<1024>(Buf1, ".DLL");
-			PE_HANDLE Dll = PeLdrLoadModuleA(Buf1);
+			PE_HANDLE Dll = PeLdrLoadModuleA(Buf1, ImportCallback);
 			if (Dll == 0)
 				return 0;
 			if (Func[0] == '#')
 				Func = (char*)atoi(Func + 1);
-			return PeLdrGetProcAddressA(Dll, Func);
+			return PeLdrGetProcAddressA(Dll, Func, ImportCallback);
 		}
 		return Ret;
 	}
@@ -972,11 +974,11 @@ PE_EXPORT FARPROC PeLdrGetProcAddressInternal(PE_HANDLE Pe, LPCSTR Name)
 	return 0;
 }
 
-PE_EXPORT FARPROC PeLdrGetProcAddressA(PE_HANDLE Pe, LPCSTR Name)
+PE_EXPORT FARPROC PeLdrGetProcAddressA(PE_HANDLE Pe, LPCSTR Name, IMPORT_CALLBACK ImportCallback)
 {
 	__try
 	{
-		return PeLdrGetProcAddressInternal(Pe, Name);
+		return PeLdrGetProcAddressInternal(Pe, Name, ImportCallback);
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
