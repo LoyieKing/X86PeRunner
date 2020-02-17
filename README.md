@@ -3,7 +3,7 @@
 Trying to run Windows X86 exe on Windows 10 ARM32 devices.
 
 Progress:
-- [x] Successfully ported unicorn(more information below) to Win10ARM32 platform but not uploaded to integrated into the project yet
+- [x] Successfully ported unicorn(more information about unicorn below) to Win10ARM32 platform
 - [x] Added PE Loader into the project which is written by mamaich(win86emu)
 - [ ] Load PE file into memory with unicorn hook not start yet
 
