@@ -42,6 +42,8 @@ static PE_HANDLE Modules[MAX_MODULES];
 
 LPWSTR PeLdrGetSystemDirectoryW()
 {
+	// TODO:应该是X86 dll所在的目录，不是ARM dll所在的系统目录
+	return L"C:\\Windows\\System32";
 	static wchar_t System32[1024];
 	if (System32[0] == 0)
 	{
@@ -56,6 +58,7 @@ LPWSTR PeLdrGetSystemDirectoryW()
 
 LPSTR PeLdrGetSystemDirectoryA()
 {
+	return "C:\\Windows\\System32";
 	static char System32[1024];
 	if (System32[0] == 0)
 	{
@@ -135,19 +138,19 @@ static DWORD PeLdrSearchPath(
 	}
 	lpPath = MyPath;
 
-	// first search for stub DLL that may overload the application DLL
-	wcscpy_s<1024>(MyFName, lpFileName);
-	wchar_t *DllName = wcsrchr(MyFName, '\\');
-	if (DllName == 0)
-		DllName = MyFName - 1;
-	DllName++;
-	wchar_t *DllExt = wcsrchr(DllName, '.');
-	if (DllExt)
-		*DllExt = 0;
-	wcscat(DllName, L".86.dll");	// possible buffer overflow!
-	DWORD Tmp = SearchPath(lpPath, DllName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
-	if (Tmp)
-		return Tmp;
+	//// first search for stub DLL that may overload the application DLL
+	//wcscpy_s<1024>(MyFName, lpFileName);
+	//wchar_t *DllName = wcsrchr(MyFName, '\\');
+	//if (DllName == 0)
+	//	DllName = MyFName - 1;
+	//DllName++;
+	//wchar_t *DllExt = wcsrchr(DllName, '.');
+	//if (DllExt)
+	//	*DllExt = 0;
+	//wcscat(DllName, L".86.dll");	// possible buffer overflow!
+	//DWORD Tmp = SearchPath(lpPath, MyFName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
+	//if (Tmp)
+	//	return Tmp;
 
 	return SearchPath(lpPath, lpFileName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
 }
@@ -170,16 +173,16 @@ static PE_HANDLE PeLdrOpenModuleNoAdd(LPCWSTR FileName)
 	if (PeLdrSearchPath(0, FileName, L".DLL", 1024, Buff, 0) == 0)
 		wcscpy_s<1024>(Buff, FileName);
 
-	if (wcslen(Buff)>9)
-	{
-		if (_wcsicmp(Buff + wcslen(Buff) - 7, L".86.dll") == 0)
-			IsStub = TRUE;
-		if (wcslen(FileName)>7)
-		{
-			if (_wcsicmp(FileName + wcslen(FileName) - 7, L".86.dll") == 0)
-				IsStub = FALSE;	// input file name was already ".86.dll", so don't stubify it ourselves
-		}
-	}
+	//if (wcslen(Buff)>9)
+	//{
+	//	if (_wcsicmp(Buff + wcslen(Buff) - 7, L".86.dll") == 0)
+	//		IsStub = TRUE;
+	//	if (wcslen(FileName)>7)
+	//	{
+	//		if (_wcsicmp(FileName + wcslen(FileName) - 7, L".86.dll") == 0)
+	//			IsStub = FALSE;	// input file name was already ".86.dll", so don't stubify it ourselves
+	//	}
+	//}
 
 	HANDLE H = CreateFileW(Buff, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
 	if (H == INVALID_HANDLE_VALUE)
@@ -755,10 +758,10 @@ static BOOL PeLdrAreNamesEqual(LPCWSTR Name1, LPCWSTR Name2)
 	wchar_t *Tmp2 = (wchar_t*)alloca(wcslen(Ptr2) * 2 + 2);
 	wcscpy(Tmp2, Ptr2);
 
-	if (wcslen(Tmp1)>7 && _wcsicmp(Tmp1 + wcslen(Tmp1) - 7, L".86.dll") == 0)
-		Tmp1[wcslen(Tmp1) - 7] = 0;
-	if (wcslen(Tmp2)>7 && _wcsicmp(Tmp2 + wcslen(Tmp2) - 7, L".86.dll") == 0)
-		Tmp2[wcslen(Tmp2) - 7] = 0;
+	//if (wcslen(Tmp1)>7 && _wcsicmp(Tmp1 + wcslen(Tmp1) - 7, L".86.dll") == 0)
+	//	Tmp1[wcslen(Tmp1) - 7] = 0;
+	//if (wcslen(Tmp2)>7 && _wcsicmp(Tmp2 + wcslen(Tmp2) - 7, L".86.dll") == 0)
+	//	Tmp2[wcslen(Tmp2) - 7] = 0;
 
 	if (wcslen(Tmp1)>4 && _wcsicmp(Tmp1 + wcslen(Tmp1) - 4, L".dll") == 0)
 		Tmp1[wcslen(Tmp1) - 4] = 0;
@@ -803,11 +806,25 @@ PE_EXPORT PE_HANDLE PeLdrLoadModule(LPCWSTR FileName, EXEC_MAIN_CALLBACK ExecMai
 	CLock L(&CSPeLdr); L.Lock();
 
 	HMODULE hM = LoadLibraryW(FileName);
+	
 	if (hM != NULL)
 	{
-		PE_HANDLE PE = PeLdrOpenModule(FileName);
-		PE->Base = (void*)hM;
-		return PE;
+		PE_HANDLE Pe = (PE_HANDLE)malloc(sizeof(PeFile));
+		memset(Pe, 0, sizeof(PeFile));
+
+		memcpy(&Pe->Signature, "FILE", 4);
+
+		Pe->IsGUI = ((PIMAGE_NT_HEADERS)hM)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI;
+		Pe->Base = hM;
+
+		LPWSTR fileName = (LPWSTR)malloc(1024);
+		GetModuleFileNameW(hM, fileName, 1024);
+		Pe->FileName = fileName;
+		Pe->hFile = CreateFileW(fileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+
+		Pe->IsNative = TRUE;
+
+		return Pe;
 	}
 
 	PE_HANDLE Tmp = PeLdrFindModule(FileName);

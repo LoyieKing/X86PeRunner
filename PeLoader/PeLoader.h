@@ -30,7 +30,7 @@ extern "C" {
 		BOOL AllocatedMem;  	// Memory for image (Base) was allocated by us
 		void *Base;				// Loaded image base (0 if not loaded yet)
 		DWORD Size;				// Module size
-
+		void *Data;				// Can be any thing
 	} *PE_HANDLE;
 
 	typedef FARPROC(*IMPORT_CALLBACK)(PE_HANDLE Pe, PE_HANDLE NeededDll, LPCSTR ImportName, BOOL ByName);
