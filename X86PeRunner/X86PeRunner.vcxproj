@@ -202,6 +202,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CallConverter\StdcallCallConverter.cpp" />
+    <ClCompile Include="Hook.cpp" />
     <ClCompile Include="Emulator\Emulator.cpp" />
     <ClCompile Include="Emulator\X86Emulator.cpp" />
     <ClCompile Include="main.cpp" />
@@ -217,9 +219,21 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CallConverter\CallConverter.h" />
+    <ClInclude Include="CallConverter\StdcallCallConverter.h" />
+    <ClInclude Include="Hook.h" />
     <ClInclude Include="Emulator\Emulator.h" />
     <ClInclude Include="Emulator\internal.h" />
     <ClInclude Include="Emulator\X86Emulator.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="CallConverter\asm\call.asm">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">armasm CallConverter\asm\call.asm -o "$(TargetDir)call.lib" -coff</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(TargetDir)call.lib</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">armasm CallConverter\asm\call.asm -o "$(TargetDir)call.lib" -coff</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(TargetDir)call.lib</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

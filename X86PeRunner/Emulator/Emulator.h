@@ -4,6 +4,7 @@
 class Emulator
 {
 public:
+
 	virtual void StackPush(int val) = 0;
 	virtual int StackPop() = 0;
 	virtual void RegWrite(int reg_id, int val);
