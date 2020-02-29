@@ -20,7 +20,12 @@ int Emulator::RegRead(int reg_id)
 void Emulator::Start(uint64_t begin, uint64_t until, uint64_t timeout, size_t count)
 {
 	uc_err err;
-	UC_ASSERT(uc_emu_start(engine, begin, until, timeout, count));
+	err = uc_emu_start(engine, begin, until, timeout, count);
+	if (err != UC_ERR_OK)
+	{
+		int pc;
+		uc_reg_read(engine, UC_X86_REG_EIP, &pc);
+	}
 }
 
 void Emulator::Stop()

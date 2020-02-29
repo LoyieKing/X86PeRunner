@@ -35,8 +35,8 @@ void ExecMainCallback(PE_HANDLE Pe)
 	{
 		if (Pe->IsExe)
 		{
-			emulator->StackPush(0x80000000);
-			emulator->Start(dwEntryPoint, 0x80000000);
+			emulator->StackPush(dwEntryPoint+1);
+			emulator->Start(dwEntryPoint, dwEntryPoint+1);
 
 			int ret = emulator->RegRead(UC_X86_REG_EAX);
 		}
@@ -46,8 +46,8 @@ void ExecMainCallback(PE_HANDLE Pe)
 			emulator->StackPush(DLL_PROCESS_ATTACH);//DWORD dwReason
 			emulator->StackPush((int)Pe->Base);//HMODULE
 
-			emulator->StackPush(0x80000000);
-			emulator->Start(dwEntryPoint, 0x80000000);
+			emulator->StackPush(dwEntryPoint -2);
+			emulator->Start(dwEntryPoint, dwEntryPoint -2);
 
 			BOOL ret = emulator->RegRead(UC_X86_REG_EAX);
 		}
