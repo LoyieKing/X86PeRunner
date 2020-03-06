@@ -69,19 +69,20 @@ FARPROC ImportCallback(PE_HANDLE Pe, PE_HANDLE NeededDll, LPCSTR ImportName, BOO
 	if (NeededDll->IsNative)
 	{
 		proc = GetProcAddress((HMODULE)NeededDll->Base, ImportName);
+
 		if (proc == NULL)
 		{
 			printf("Hook fail!Master dll:%s\tSlave dll:%s\tImportName:%s\n", Pe->FileName, NeededDll->FileName, ImportName);
 		}
-		std::map<LPCSTR, ImportHookData*> *hooks;
+		std::map<std::string, ImportHookData*> *hooks;
 		if (NeededDll->Data == nullptr)
 		{
-			hooks = new std::map<LPCSTR, ImportHookData*>();
+			hooks = new std::map<std::string, ImportHookData*>();
 			NeededDll->Data = hooks;
 		}
 		else
 		{
-			hooks = (std::map<LPCSTR, ImportHookData*>*)NeededDll->Data;
+			hooks = (std::map<std::string, ImportHookData*>*)NeededDll->Data;
 		}
 
 		if (hooks->find(ImportName) == hooks->end())
