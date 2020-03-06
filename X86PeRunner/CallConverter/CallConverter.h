@@ -1,6 +1,6 @@
 #pragma once
-#include"..\Emulator\Emulator.h"
-#include"..\Hook.h"
+#include"Emulator\Emulator.h"
+#include"Hook\Hook.h"
 
 
 class CallConverter

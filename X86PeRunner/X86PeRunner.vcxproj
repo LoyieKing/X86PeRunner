@@ -104,7 +104,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -121,7 +121,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -138,7 +138,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -157,7 +157,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -174,7 +174,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -192,7 +192,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)PeLoader;$(ProjectDir)capstone\include;$(ProjectDir)unicorn\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -203,10 +203,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CallConverter\StdcallCallConverter.cpp" />
-    <ClCompile Include="Hook.cpp" />
+    <ClCompile Include="Hook\Hook.cpp" />
     <ClCompile Include="Emulator\Emulator.cpp" />
     <ClCompile Include="Emulator\X86Emulator.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PreparedHook\Kernel32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="capstone\capstone.dll">
@@ -221,10 +222,11 @@
   <ItemGroup>
     <ClInclude Include="CallConverter\CallConverter.h" />
     <ClInclude Include="CallConverter\StdcallCallConverter.h" />
-    <ClInclude Include="Hook.h" />
+    <ClInclude Include="Hook\Hook.h" />
     <ClInclude Include="Emulator\Emulator.h" />
     <ClInclude Include="Emulator\internal.h" />
     <ClInclude Include="Emulator\X86Emulator.h" />
+    <ClInclude Include="PreparedHook\Kernel32.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="CallConverter\asm\call.asm">

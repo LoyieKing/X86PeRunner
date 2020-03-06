@@ -5,10 +5,51 @@
 
 #include"CallConverter\StdcallCallConverter.h"
 #include"CallConverter\CallConverter.h"
+
+#include"PreparedHook\Kernel32.h"
+
 #include<map>
 
-Emulator* emulator = new X86Emulator;
-CallConverter* callConverter = new StdcallCallConverter;
+
+Emulator* emulator;
+CallConverter* callConverter;
+
+
+#define HOOK_PROC_ADDRESS(pe,func) HookProcAddress(pe, "##func##" , (DWORD)PreparedHook::##func)
+void HookProcAddress(PE_HANDLE pe, LPCSTR lpProcName, DWORD newProcAddress)
+{
+	auto hooks = (std::map<std::string, ImportHookData*>*)pe->Data;
+	auto oldProcAddress = GetProcAddress((HMODULE)pe->Base, lpProcName);
+
+	uc_hook* hh = new uc_hook;
+
+	auto data = new ImportHookData;
+	data->Dll = pe;
+	data->ImportName = lpProcName;
+	data->ByName = true;
+	data->Proc = oldProcAddress;
+	data->Hook = hh;
+
+	uc_hook_add(emulator->engine, hh, UC_HOOK_CODE, (void*)newProcAddress, (void*)data, (uint64_t)oldProcAddress, (uint64_t)oldProcAddress);
+
+	hooks->insert(std::make_pair(lpProcName, data));
+}
+
+void InitHooks()
+{
+	emulator = new X86Emulator;
+	callConverter = new StdcallCallConverter;
+
+	//Hook LoadLibrary and others
+	PE_HANDLE HKernel32 = PeLdrLoadModuleA("Kernel32.dll", ExecMainCallback, ImportCallback);
+	auto *hooks = new std::map<std::string, ImportHookData*>;
+	HKernel32->Data = hooks;
+	
+	//HookProcAddress(HKernel32, "GetModuleFileNameW", (DWORD)PreparedHook::GetModuleFileNameW);
+	HOOK_PROC_ADDRESS(HKernel32, GetModuleFileNameW);
+
+
+}
 
 void ExecMainCallback(PE_HANDLE Pe)
 {

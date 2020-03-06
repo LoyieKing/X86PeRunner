@@ -1,6 +1,6 @@
 #include<stdio.h>
 #include"PeLoader.h"
-#include"Hook.h"
+#include"Hook\Hook.h"
 
 
 int main(int argc, char* argv[])

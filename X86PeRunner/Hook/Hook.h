@@ -13,6 +13,7 @@ struct ImportHookData
 	uc_hook* Hook;
 };
 
+void	InitHooks();
 void	ExecMainCallback	(PE_HANDLE Pe);
 FARPROC ImportCallback		(PE_HANDLE Pe, PE_HANDLE NeededDll, LPCSTR ImportName, BOOL ByName);
 void	UnicornHookCallback	(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
